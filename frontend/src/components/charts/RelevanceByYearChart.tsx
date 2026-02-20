@@ -15,7 +15,7 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     return (
         <div className="bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 shadow-md min-w-[120px]">
             <p className="text-[11px] text-slate-500 mb-1 font-mono">
-                Year {label}
+                Year {label ?? 'N/A'}
             </p>
             <p className="text-sm font-bold text-sky-600 font-mono">
                 {payload[0]?.value?.toFixed(2)}

@@ -77,6 +77,13 @@ DataRecordSchema.index({ region: 1 });
 DataRecordSchema.index({ city: 1 });
 DataRecordSchema.index({ end_year: 1 });
 
+DataRecordSchema.index({ sector: 1, region: 1 });
+DataRecordSchema.index({ country: 1, end_year: 1 });
+DataRecordSchema.index({ pestle: 1, source: 1 });
+DataRecordSchema.index({ intensity: 1 });
+DataRecordSchema.index({ likelihood: 1 });
+DataRecordSchema.index({ relevance: 1 });
+
 const DataRecord: Model<IDataRecord> = model<IDataRecord>('DataRecord', DataRecordSchema);
 
 export default DataRecord;

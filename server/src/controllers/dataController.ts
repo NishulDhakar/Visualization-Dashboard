@@ -1,16 +1,19 @@
 import { Request, Response, NextFunction } from 'express';
 import DataRecord from '../models/DataRecord';
-import { AppError } from '../utils/errorHandler';
 
-interface FilterQuery {
-    end_year?: number;
-    topic?: string;
-    sector?: string;
-    region?: string;
-    pestle?: string;
-    source?: string;
-    country?: string;
-    city?: string;
+const LEAN_SELECT = '-insight -url -title -added -published';
+
+interface CacheEntry { data: unknown; expiry: number }
+const cache = new Map<string, CacheEntry>();
+const CACHE_TTL = 60_000;
+
+function cached<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
+    const hit = cache.get(key);
+    if (hit && hit.expiry > Date.now()) return Promise.resolve(hit.data as T);
+    return fetcher().then((data) => {
+        cache.set(key, { data, expiry: Date.now() + CACHE_TTL });
+        return data;
+    });
 }
 
 export const getData = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -33,10 +36,11 @@ export const getData = async (req: Request, res: Response, next: NextFunction): 
         const skip = (pageNum - 1) * limitNum;
 
         const [data, total] = await Promise.all([
-            DataRecord.find(query).skip(skip).limit(limitNum).lean(),
+            DataRecord.find(query).select(LEAN_SELECT).skip(skip).limit(limitNum).lean(),
             DataRecord.countDocuments(query),
         ]);
 
+        res.set('Cache-Control', 'public, max-age=30');
         res.status(200).json({
             success: true,
             total,
@@ -52,26 +56,29 @@ export const getData = async (req: Request, res: Response, next: NextFunction): 
 
 export const getIntensityByRegion = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const result = await DataRecord.aggregate([
-            { $match: { region: { $ne: '' }, intensity: { $gt: 0 } } },
-            {
-                $group: {
-                    _id: '$region',
-                    avgIntensity: { $avg: '$intensity' },
-                    count: { $sum: 1 },
+        const result = await cached('intensity-by-region', () =>
+            DataRecord.aggregate([
+                { $match: { region: { $ne: '' }, intensity: { $gt: 0 } } },
+                {
+                    $group: {
+                        _id: '$region',
+                        avgIntensity: { $avg: '$intensity' },
+                        count: { $sum: 1 },
+                    },
                 },
-            },
-            { $sort: { avgIntensity: -1 } },
-            {
-                $project: {
-                    _id: 0,
-                    region: '$_id',
-                    avgIntensity: { $round: ['$avgIntensity', 2] },
-                    count: 1,
+                { $sort: { avgIntensity: -1 } },
+                {
+                    $project: {
+                        _id: 0,
+                        region: '$_id',
+                        avgIntensity: { $round: ['$avgIntensity', 2] },
+                        count: 1,
+                    },
                 },
-            },
-        ]);
+            ])
+        );
 
+        res.set('Cache-Control', 'public, max-age=60');
         res.status(200).json({ success: true, data: result });
     } catch (error) {
         next(error);
@@ -80,26 +87,29 @@ export const getIntensityByRegion = async (_req: Request, res: Response, next: N
 
 export const getLikelihoodByCountry = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const result = await DataRecord.aggregate([
-            { $match: { country: { $ne: '' }, likelihood: { $gt: 0 } } },
-            {
-                $group: {
-                    _id: '$country',
-                    avgLikelihood: { $avg: '$likelihood' },
-                    count: { $sum: 1 },
+        const result = await cached('likelihood-by-country', () =>
+            DataRecord.aggregate([
+                { $match: { country: { $ne: '' }, likelihood: { $gt: 0 } } },
+                {
+                    $group: {
+                        _id: '$country',
+                        avgLikelihood: { $avg: '$likelihood' },
+                        count: { $sum: 1 },
+                    },
                 },
-            },
-            { $sort: { avgLikelihood: -1 } },
-            {
-                $project: {
-                    _id: 0,
-                    country: '$_id',
-                    avgLikelihood: { $round: ['$avgLikelihood', 2] },
-                    count: 1,
+                { $sort: { avgLikelihood: -1 } },
+                {
+                    $project: {
+                        _id: 0,
+                        country: '$_id',
+                        avgLikelihood: { $round: ['$avgLikelihood', 2] },
+                        count: 1,
+                    },
                 },
-            },
-        ]);
+            ])
+        );
 
+        res.set('Cache-Control', 'public, max-age=60');
         res.status(200).json({ success: true, data: result });
     } catch (error) {
         next(error);
@@ -108,28 +118,32 @@ export const getLikelihoodByCountry = async (_req: Request, res: Response, next:
 
 export const getRelevanceByYear = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const result = await DataRecord.aggregate([
-            { $match: { end_year: { $ne: null, $gt: 0 }, relevance: { $gt: 0 } } },
-            {
-                $group: {
-                    _id: '$end_year',
-                    avgRelevance: { $avg: '$relevance' },
-                    count: { $sum: 1 },
+        const result = await cached('relevance-by-year', () =>
+            DataRecord.aggregate([
+                { $match: { end_year: { $ne: null, $gt: 0 }, relevance: { $gt: 0 } } },
+                {
+                    $group: {
+                        _id: '$end_year',
+                        avgRelevance: { $avg: '$relevance' },
+                        count: { $sum: 1 },
+                    },
                 },
-            },
-            { $sort: { _id: 1 } },
-            {
-                $project: {
-                    _id: 0,
-                    year: '$_id',
-                    avgRelevance: { $round: ['$avgRelevance', 2] },
-                    count: 1,
+                { $sort: { _id: 1 } },
+                {
+                    $project: {
+                        _id: 0,
+                        year: '$_id',
+                        avgRelevance: { $round: ['$avgRelevance', 2] },
+                        count: 1,
+                    },
                 },
-            },
-        ]);
+            ])
+        );
 
+        res.set('Cache-Control', 'public, max-age=60');
         res.status(200).json({ success: true, data: result });
     } catch (error) {
         next(error);
     }
 };
+
