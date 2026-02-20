@@ -29,7 +29,7 @@ export const getData = async (req: Request, res: Response, next: NextFunction): 
         if (city && city !== '') query['city'] = city;
 
         const pageNum = Math.max(1, parseInt(String(page ?? '1'), 10));
-        const limitNum = Math.min(500, Math.max(1, parseInt(String(limit ?? '50'), 10)));
+        const limitNum = Math.min(1000, Math.max(1, parseInt(String(limit ?? '50'), 10)));
         const skip = (pageNum - 1) * limitNum;
 
         const [data, total] = await Promise.all([

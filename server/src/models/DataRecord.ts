@@ -1,3 +1,4 @@
+
 import { Schema, model, Document, Model } from 'mongoose';
 
 export interface IDataRecord extends Document {
@@ -16,6 +17,28 @@ export interface IDataRecord extends Document {
     relevance: number;
     pestle: string;
     source: string;
+    city: string;
+    title: string;
+    likelihood: number;
+}
+
+export interface RawRecord {
+    end_year: number | string;
+    intensity: number;
+    sector: string;
+    topic: string;
+    insight: string;
+    url: string;
+    region: string;
+    start_year: number | string;
+    impact: number | string;
+    added: string;
+    published: string;
+    country: string;
+    relevance: number;
+    pestle: string;
+    source: string;
+    city: string;
     title: string;
     likelihood: number;
 }
@@ -37,6 +60,7 @@ const DataRecordSchema = new Schema<IDataRecord>(
         relevance: { type: Number, default: 0 },
         pestle: { type: String, default: '' },
         source: { type: String, default: '' },
+        city: { type: String, default: '' },
         title: { type: String, default: '' },
         likelihood: { type: Number, default: 0 },
     },
@@ -50,6 +74,7 @@ DataRecordSchema.index({ sector: 1 });
 DataRecordSchema.index({ topic: 1 });
 DataRecordSchema.index({ country: 1 });
 DataRecordSchema.index({ region: 1 });
+DataRecordSchema.index({ city: 1 });
 DataRecordSchema.index({ end_year: 1 });
 
 const DataRecord: Model<IDataRecord> = model<IDataRecord>('DataRecord', DataRecordSchema);

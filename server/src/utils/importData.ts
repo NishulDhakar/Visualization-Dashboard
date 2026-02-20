@@ -20,6 +20,7 @@ interface RawRecord {
     relevance: number;
     pestle: string;
     source: string;
+    city: string;
     title: string;
     likelihood: number;
 }
@@ -63,6 +64,7 @@ const importData = async (): Promise<void> => {
         relevance: record.relevance ?? 0,
         pestle: record.pestle ?? '',
         source: record.source ?? '',
+        city: record.city ?? '',
         title: record.title ?? '',
         likelihood: record.likelihood ?? 0,
     }));
