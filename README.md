@@ -58,7 +58,7 @@ Users can drill down into the data using a comprehensive suite of real-time filt
 
 ### 1. Clone the repository
 ```bash
-git clone <your-repo-link>
+git clone https://github.com/NishulDhakar/Visualization-Dashboard
 cd visualization-dashboard
 ```
 
