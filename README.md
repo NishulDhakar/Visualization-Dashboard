@@ -2,12 +2,15 @@
 
 A full-stack web application designed to present interactive data visualizations and analytics based on the provided JSON dataset. This project was developed as part of the Blackcoffer assignment.
 
+<img width="1121" height="664" alt="Screenshot 2026-02-21 at 7 46 30 PM" src="https://github.com/user-attachments/assets/b55cd437-e1c4-49b9-9e8e-ff6f2eadfaa3" />
+
 ## 📊 Overview
 The Visualization Dashboard reads JSON data stored in a **MongoDB** database and exposes it via a **Node.js/Express API**. The frontend is built using **Next.js** and utilizes **Recharts** to beautifully render responsive, interactive charts. 
 
 Drawing inspiration from high-fidelity analytical dashboards, this application focuses on clear insights, dynamic real-time filtering, and professional UI/UX design.
 
 ## 🛠️ Technology Stack
+
 ### Frontend
 - **Framework:** Next.js
 - **Styling:** Tailwind CSS
